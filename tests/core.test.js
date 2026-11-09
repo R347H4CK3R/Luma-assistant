@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createState,addMemory,searchMemory,planGoal,completeTask,validateEndpoint,buildRequest,parseBackup} from '../src/core.js';
+test('new state starts private and empty',()=>{const s=createState();assert.equal(s.memories.length,0);assert.equal(s.tasks.length,0);});
+test('memory persists exact text and can be searched without inference',()=>{const s=addMemory(createState(),'I prefer vegetarian lunches');assert.equal(searchMemory(s,'vegetarian')[0].text,'I prefer vegetarian lunches');assert.equal(searchMemory(s,'airport').length,0);});
+test('empty and overlong notes rejected',()=>{assert.throws(()=>addMemory(createState(),' '));assert.throws(()=>addMemory(createState(),'x'.repeat(4001)));});
+test('plans are local checklist tasks and never external actions',()=>{const s=planGoal(createState(),'Plan my trip');assert.equal(s.tasks.length,3);assert.ok(s.tasks.every(t=>!t.done));assert.equal(completeTask(s,s.tasks[0].id).tasks[0].done,true);});
+test('rejects insecure and credential-bearing endpoints',()=>{for(const u of ['http://example.com','https://u:p@example.com','file:///tmp/model','https://a.com?q=secret','https://a.com#secret'])assert.throws(()=>validateEndpoint(u));assert.equal(validateEndpoint('https://models.example.com/'),'https://models.example.com');});
+test('model payload includes only question unless explicit note inclusion',()=>{const s=addMemory(createState(),'secret favorite color');assert.ok(!JSON.stringify(buildRequest(s,'hello','qwen',false)).includes('secret favorite'));assert.ok(JSON.stringify(buildRequest(s,'hello','qwen',true)).includes('secret favorite'));});
+test('backup validates schema and record fields',()=>{const s=addMemory(createState(),'hi');assert.deepEqual(parseBackup(JSON.stringify(s)),s);for(const input of ['{}','null','{"version":1,"memories":[{"text":3}],"tasks":[]}'])assert.throws(()=>parseBackup(input));});
+test('memory and checklist limits match import limits',()=>{const s=createState();s.memories=Array.from({length:1000},()=>({text:'a'}));assert.throws(()=>addMemory(s,'b'));const t=createState();t.tasks=Array.from({length:2999},()=>({}));assert.throws(()=>planGoal(t,'a'));});
+import {serializeState} from '../src/core.js';
+test('storage export respects UTF-8 import byte budget',()=>{const s=createState();s.memories=Array.from({length:250},(_,i)=>({id:String(i),created:'2026-01-01',text:'界'.repeat(3000)}));assert.throws(()=>serializeState(s));assert.equal(parseBackup(serializeState(createState())).version,1);});
