@@ -17,7 +17,10 @@ Save the context you choose. Search it offline, forget individual notes, or keep
 SMALL STEPS, REAL PROGRESS
 Start a goal checklist, mark steps complete and see what is still ahead. Local planning uses a straightforward template, so it works without an internet connection or AI subscription.
 
-OPTIONAL AI, CLEAR CHOICES
+ON-DEVICE AI ON SUPPORTED IPHONES
+Use Apple’s local system model to draft, summarize and think through a plan. Requires iOS 26, compatible Apple Intelligence hardware and enabled/downloaded model assets. Feature availability varies by language and region. No model API subscription is required. Older or unsupported devices retain local notes and checklists.
+
+OPTIONAL SERVER AI, CLEAR CHOICES
 Connect an OpenAI-compatible HTTPS server you control or trust. Choose the model, review each outgoing request and decide whether to include saved notes. No model service is included; server availability, pricing and privacy terms vary.
 
 A QUIETER SPACE
@@ -25,7 +28,7 @@ A thoughtful dark interface, warm accents and straightforward navigation help yo
 
 No mandatory account. No built-in analytics. No automatic sharing of your notes.
 
-IMPORTANT: Notes and exports are not encrypted by Luma. Do not save secrets or sensitive records. AI connection requires a separately configured compatible server and internet access. Luma does not control other apps, run tasks in the background or include an on-device language model. AI answers can be wrong; review important decisions yourself.
+IMPORTANT: Notes and exports are not encrypted by Luma. Do not save secrets or sensitive records. AI connection requires a separately configured compatible server and internet access. Luma does not control other apps, run tasks in the background or bundle model weights. On supported iPhones it can use Apple’s available system model. AI answers can be wrong; review important decisions yourself.
 
 ## Screenshot plan (capture real builds, never fabricate)
 1. Today: “Make room for what matters.”
@@ -35,3 +38,4 @@ IMPORTANT: Notes and exports are not encrypted by Luma. Do not save secrets or s
 
 ## Before submission
 Replace publisher, support/privacy URLs and category metadata; verify feature behavior on physical devices; set final age/content rating; confirm name/trademark availability; prepare native icons/screenshots; review applicable user-generated AI content/reporting requirements; do not claim to replace every assistant or offer free unlimited inference.
+

@@ -9,16 +9,17 @@ Luma is an independent, local-first personal planning assistant for iOS and Andr
 - Create, search and individually delete persistent memories on the current device.
 - Create and complete local goal checklists. These are explicitly labeled fixed templates, not simulated AI.
 - Export/import validated JSON backups with confirmation before replacement.
+- On supported iPhones, an Apple Foundation Models bridge for local writing, summarization and planning, with availability checks, bounded opt-in notes and cancellation. Requires iOS 26 and Apple Intelligence enabled/model ready. Native inference still requires physical-device verification.
 - Optional OpenAI-compatible HTTPS chat, using your model name and optional session-only token.
 - Review the destination and exact message payload before sending. Memories are excluded by default; including them is opt-in for each request. At most ten notes, 1,000 characters each, are included.
 - Plain-text response rendering, no model-initiated tool execution, redirect rejection, response size and time limits.
 - Shared responsive interface and generated native Capacitor iOS/Android projects.
 
 ## What is not implemented
-On-device LLM inference, voice, cross-device sync, notification scheduling, calendar/mail integrations, background autonomous execution, secure/encrypted memory storage, account login and arbitrary app control. Luma cannot replace the operating system assistant or bypass platform permissions. iOS limits default-assistant roles and background work; Android capabilities also require explicit permissions and distribution-policy compliance.
+Android on-device LLM inference, voice, cross-device sync, notification scheduling, calendar/mail integrations, background autonomous execution, secure/encrypted memory storage, account login and arbitrary app control. Luma cannot replace the operating system assistant or bypass platform permissions. iOS limits default-assistant roles and background work; Android capabilities also require explicit permissions and distribution-policy compliance.
 
 ## Free means no mandatory model subscription
-Notes, search and checklist planning operate locally without paid APIs. General AI answers require a compatible server you explicitly configure. You can run an appropriately licensed open model on your own computer (for example Qwen 2.5 3B with a compatible serving layer). That is **not on-phone inference** and still uses your hardware, electricity and network. Cloud providers may charge or impose quotas. No provider key, subscription or hosted inference service is bundled. Model licenses and hardware requirements must be checked before distribution. Free app source does not waive Apple/Google developer registration, signing, hosting or store costs.
+Notes, search and checklist planning operate locally without paid APIs. On eligible iPhones, the Ask tab uses Apple’s system model without a model API subscription. This requires iOS 26, Apple Intelligence-capable hardware, supported language/region and downloaded model assets. Other devices can use a compatible server you explicitly configure. You can run an appropriately licensed open model on your own computer (for example Qwen 2.5 3B with a compatible serving layer). That is **not on-phone inference** and still uses your hardware, electricity and network. Cloud providers may charge or impose quotas. No provider key, subscription, hosted inference service or redistributable model weights are bundled. No unavailable local request silently switches to a server. Model licenses and hardware requirements must be checked before distribution. Free app source does not waive Apple/Google developer registration, signing, hosting or store costs.
 
 ## Run and test
 Requires Node 22+.
@@ -58,3 +59,7 @@ See `docs/PRIVACY.md`. The app has no analytics or automatic network calls. Devi
 
 ## Store copy
 Draft listing language is in `docs/STORE_LISTING.md`. It describes implemented capabilities and distinguishes optional server connection from offline planning. Store submission requires the release checklist, real device screenshots, actual policy/privacy answers and owner review. Product name and trademarks have not been cleared.
+
+
+## Local AI boundaries
+The local Ask tab passes at most 2,000 question characters and, only when checked, three saved notes of 500 characters each to the device model. No tools execute and responses are not saved automatically. Cancellation discards late responses. The app keeps the same bundle identifier, local storage key and backup schema so this update does not migrate or erase existing notes. iOS 14–25 and unsupported devices keep their offline memory/checklist features and display a clear local-model unavailable state. See `docs/LOCAL_AI.md`.

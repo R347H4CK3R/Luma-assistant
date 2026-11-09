@@ -22,6 +22,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci && npm test && npm run build && npx cap sync ios
+      - name: Verify native validation and iOS 26 SDK
+        run: |
+          set -euo pipefail
+          XCODE=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          test -n "$XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          bash scripts/test-native.sh
+          SDK=$(xcrun --sdk iphoneos --show-sdk-version)
+          test "${SDK%%.*}" -ge 26
       - name: Build unsigned arm64 device application
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
@@ -55,7 +64,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "iphone-preview-${{ github.run_number }}" \
-            build/Luma-unsigned.ipa build/SHA256SUMS.txt build/VERIFICATION.txt \
+            build/Luma-unsigned.ipa build/SHA256SUMS.txt build/VERIFICATION.txt public/THIRD_PARTY_NOTICES.txt \
             --target "${{ github.sha }}" --prerelease \
             --title "Luma iPhone unsigned preview ${{ github.run_number }}" \
-            --notes "Unsigned arm64 iPhone build for user signing with Strata/SideStore. Bundle and architecture inspected in CI; physical-device installation is not verified. This is an early preview, not an App Store release. Local memories and template checklists work offline; optional AI requires your own compatible server. Private release downloads require repository access and cannot be used directly in a public catalog."
+            --notes "Unsigned arm64 iPhone build for user signing with Strata/SideStore. Bundle and architecture inspected in CI; physical-device installation is not verified. This is an early preview, not an App Store release. Local memories and template checklists work offline. Version 1.1 adds Apple on-device AI on supported iOS26 Apple Intelligence devices; physical inference is unverified. Other devices can optionally connect their own compatible server. No automatic cloud fallback, tools or background autonomy. Private release downloads require repository access and cannot be used directly in a public catalog."
+

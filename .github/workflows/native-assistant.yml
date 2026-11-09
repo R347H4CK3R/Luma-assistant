@@ -1,0 +1,38 @@
+name: On-device assistant native checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode with iOS 26 SDK
+        run: |
+          set -euo pipefail
+          XCODE=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
+          test -n "$XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          SDK=$(xcrun --sdk iphoneos --show-sdk-version)
+          test "${SDK%%.*}" -ge 26
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - name: Test native validation and generation lifecycle without a model
+        run: bash scripts/test-native.sh
+      - run: npm ci && npm run build && npx cap sync ios
+      - name: Compile actual FoundationModels and Capacitor bridge
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug -derivedDataPath build/native-check \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Compile unavailable-framework fallback
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug -derivedDataPath build/native-fallback \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='DEBUG LOCAL_ASSISTANT_DISABLE_MODEL' \
+            CODE_SIGNING_ALLOWED=NO build
