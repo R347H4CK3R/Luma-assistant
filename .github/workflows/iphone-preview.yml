@@ -1,0 +1,61 @@
+name: iPhone unsigned preview
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'ios/**'
+      - 'index.html'
+      - 'package*.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/iphone-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  iphone:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci && npm test && npm run build && npx cap sync ios
+      - name: Build unsigned arm64 device application
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -configuration Release -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} build
+      - name: Verify and package
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          APP=build/ios/Build/Products/Release-iphoneos/App.app
+          test -d "$APP"
+          EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          test -s "$APP/$EXE"
+          test -s "$APP/public/index.html"
+          test -s "$APP/capacitor.config.json"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "app.luma.personal"
+          xcrun lipo -verify_arch arm64 "$APP/$EXE"
+          xcrun vtool -show-build "$APP/$EXE" | tee build/mach-o-platform.txt
+          grep -q 'platform IOS$' build/mach-o-platform.txt
+          mkdir -p build/package/Payload
+          ditto "$APP" build/package/Payload/App.app
+          (cd build/package && ditto -c -k --sequesterRsrc --keepParent Payload ../Luma-unsigned.ipa)
+          shasum -a 256 build/Luma-unsigned.ipa > build/SHA256SUMS.txt
+          printf 'Source commit: %s\nArchitecture: arm64\nPlatform: iphoneos\nSigning: unsigned; requires user signing\nPhysical installation: not verified\nStore submission: not ready\n' "$SOURCE_SHA" > build/VERIFICATION.txt
+          unzip -t build/Luma-unsigned.ipa
+      - name: Publish private unsigned preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "iphone-preview-${{ github.run_number }}" \
+            build/Luma-unsigned.ipa build/SHA256SUMS.txt build/VERIFICATION.txt \
+            --target "${{ github.sha }}" --prerelease \
+            --title "Luma iPhone unsigned preview ${{ github.run_number }}" \
+            --notes "Unsigned arm64 iPhone build for user signing with Strata/SideStore. Bundle and architecture inspected in CI; physical-device installation is not verified. This is an early preview, not an App Store release. Local memories and template checklists work offline; optional AI requires your own compatible server. Private release downloads require repository access and cannot be used directly in a public catalog."
