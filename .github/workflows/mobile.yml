@@ -26,7 +26,8 @@ jobs:
         with: {node-version: 22, cache: npm}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 21}
-      - uses: android-actions/setup-android@v3
+      - name: Verify preinstalled Android SDK
+        run: test -d "$ANDROID_HOME/platforms/android-35"
       - run: npm ci && npm run mobile:sync
       - run: chmod +x gradlew && ./gradlew test lint assembleDebug
         working-directory: android
