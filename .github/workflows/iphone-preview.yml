@@ -41,7 +41,7 @@ jobs:
           test -s "$APP/public/index.html"
           test -s "$APP/capacitor.config.json"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" = "app.luma.personal"
-          xcrun lipo -verify_arch arm64 "$APP/$EXE"
+          xcrun lipo "$APP/$EXE" -verify_arch arm64
           xcrun vtool -show-build "$APP/$EXE" | tee build/mach-o-platform.txt
           grep -q 'platform IOS$' build/mach-o-platform.txt
           mkdir -p build/package/Payload
