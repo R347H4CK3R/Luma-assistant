@@ -8,7 +8,7 @@ Luma is an independent, local-first personal planning assistant for iOS and Andr
 ## What works in source
 - Create, search and individually delete persistent memories on the current device.
 - Create and complete local goal checklists. These are explicitly labeled fixed templates, not simulated AI.
-- Export/import validated JSON backups with confirmation before replacement.
+- Export/import validated JSON backups with confirmation before replacement. iPhone uses the native document picker/share sheet; optional AES-GCM encrypted backups use a user-managed passphrase. Native Files behavior still requires physical-device verification.
 - On supported iPhones, an Apple Foundation Models bridge for local writing, summarization and planning, with availability checks, bounded opt-in notes and cancellation. Requires iOS 26 and Apple Intelligence enabled/model ready. Native inference still requires physical-device verification.
 - Optional OpenAI-compatible HTTPS chat, using your model name and optional session-only token.
 - Review the destination and exact message payload before sending. Memories are excluded by default; including them is opt-in for each request. At most ten notes, 1,000 characters each, are included.
@@ -63,3 +63,9 @@ Draft listing language is in `docs/STORE_LISTING.md`. It describes implemented c
 
 ## Local AI boundaries
 The local Ask tab passes at most 2,000 question characters and, only when checked, three saved notes of 500 characters each to the device model. No tools execute and responses are not saved automatically. Cancellation discards late responses. The app keeps the same bundle identifier, local storage key and backup schema so this update does not migrate or erase existing notes. iOS 14–25 and unsupported devices keep their offline memory/checklist features and display a clear local-model unavailable state. See `docs/LOCAL_AI.md`.
+
+## Backups
+Memory offers plain JSON export and optional passphrase-protected encrypted export. Passphrases require 12–256 characters and are never saved; there is no recovery service. Wrong passwords/tampered files fail without replacing current data. Import requires explicit replacement confirmation. Plain and encrypted exports are capped to fit the validated restore budget. This does not encrypt app-local notes. See `docs/BACKUPS.md`.
+
+## Bundled help, no downloads
+Seven original offline planning kits (general, weekly reset, trip, focus, project, meals and home) and six editable writing/thinking prompts are included. A built-in Guide explains what works immediately, supported iPhone model requirements, optional server setup and data boundaries. Nothing auto-runs or creates records on first launch. Model weights are not bundled; Apple’s model is managed by iOS.

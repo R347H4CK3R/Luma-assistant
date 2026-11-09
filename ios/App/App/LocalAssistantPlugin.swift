@@ -185,6 +185,8 @@ public final class LocalAssistantPlugin: CAPPlugin, CAPBridgedPlugin {
 final class LumaBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(LocalAssistantPlugin())
+        bridge?.registerPluginInstance(LocalFilesPlugin())
     }
 }
 #endif
+
