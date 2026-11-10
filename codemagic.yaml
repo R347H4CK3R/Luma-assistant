@@ -1,0 +1,20 @@
+# Manual only: no triggering section, signing credentials, or publishing hooks.
+workflows:
+  luma-verified-mobile:
+    name: Verify Luma mobile previews
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: '26.2'
+      node: '22'
+      java: '21'
+      cocoapods: default
+    scripts:
+      - name: Test pipeline failure handling
+        script: python3 -m unittest discover -s tests -p test_codemagic_workflow.py
+      - name: Run all checks and package verified unsigned previews
+        script: bash scripts/codemagic-build.sh
+    # This directory is created only after every required check succeeds.
+    # Artifacts stay in the authorized private Codemagic project.
+    artifacts:
+      - build/release-ready/*
