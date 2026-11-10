@@ -4,6 +4,8 @@ permissions:
   contents: read
 jobs:
   web:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,11 +16,32 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
+      # Same-repository builds use Releases storage, not the Actions artifact allowance.
+      # Fork and Dependabot events keep their read-only artifact path.
+      - name: Preserve verified output in a private draft release
+        if: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTPUT_FILE: docs/luma-mobile-preview.png
+          RELEASE_PREFIX: luma-web
+        run: |
+          set -euo pipefail
+          test -s "$OUTPUT_FILE"
+          TAG="${RELEASE_PREFIX}-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sha256sum "$OUTPUT_FILE" > "$OUTPUT_FILE.sha256"
+          gh release create "$TAG" "$OUTPUT_FILE" "$OUTPUT_FILE.sha256" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --prerelease --title "$RELEASE_PREFIX CI output $GITHUB_RUN_ID" --notes "CI output from commit $GITHUB_SHA, run $GITHUB_RUN_ID attempt $GITHUB_RUN_ATTEMPT. Private draft evidence only; not a signed, device-verified or store-approved release."
+          VERIFY_DIR=$(mktemp -d "$RUNNER_TEMP/release-check.XXXXXX")
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$(basename "$OUTPUT_FILE")" --dir "$VERIFY_DIR"
+          cmp "$OUTPUT_FILE" "$VERIFY_DIR/$(basename "$OUTPUT_FILE")"
+          cat "$OUTPUT_FILE.sha256"
       - uses: actions/upload-artifact@v4
+        if: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.event.pull_request.user.login == 'dependabot[bot]')) }}
         with:
           name: luma-web-preview
           path: docs/luma-mobile-preview.png
   android:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +54,26 @@ jobs:
       - run: npm ci && npm run mobile:sync
       - run: chmod +x gradlew && ./gradlew test lint assembleDebug
         working-directory: android
+      # Same-repository builds use Releases storage, not the Actions artifact allowance.
+      # Fork and Dependabot events keep their read-only artifact path.
+      - name: Preserve verified output in a private draft release
+        if: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTPUT_FILE: android/app/build/outputs/apk/debug/app-debug.apk
+          RELEASE_PREFIX: luma-android
+        run: |
+          set -euo pipefail
+          test -s "$OUTPUT_FILE"
+          TAG="${RELEASE_PREFIX}-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sha256sum "$OUTPUT_FILE" > "$OUTPUT_FILE.sha256"
+          gh release create "$TAG" "$OUTPUT_FILE" "$OUTPUT_FILE.sha256" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --prerelease --title "$RELEASE_PREFIX CI output $GITHUB_RUN_ID" --notes "CI output from commit $GITHUB_SHA, run $GITHUB_RUN_ID attempt $GITHUB_RUN_ATTEMPT. Private draft evidence only; not a signed, device-verified or store-approved release."
+          VERIFY_DIR=$(mktemp -d "$RUNNER_TEMP/release-check.XXXXXX")
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$(basename "$OUTPUT_FILE")" --dir "$VERIFY_DIR"
+          cmp "$OUTPUT_FILE" "$VERIFY_DIR/$(basename "$OUTPUT_FILE")"
+          cat "$OUTPUT_FILE.sha256"
       - uses: actions/upload-artifact@v4
+        if: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.event.pull_request.user.login == 'dependabot[bot]')) }}
         with:
           name: luma-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
